@@ -17,41 +17,54 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
+        <!-- Spring Boot Redis 支持，包含连接池和Lettuce客户端 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
+
+        <!-- Apache Commons 对象池实现，被Redis Starter依赖 -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
+
+        <!-- Spring Boot Web 支持（含Tomcat、Spring MVC等） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- MySQL JDBC驱动（运行时依赖） -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <scope>runtime</scope>
             <version>5.1.47</version>
         </dependency>
+
+        <!-- Lombok 注解简化Java代码（编译时生成getter/setter等） -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
+        <!-- Spring Boot 测试支持（仅测试范围） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- MyBatis-Plus 增强工具（含MyBatis、自动分页等） -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>3.4.3</version>
         </dependency>
-        <!--hutool-->
+
+        <!-- Hutool Java工具集（提供各种实用工具类） -->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
