@@ -12,17 +12,12 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * <p>
- * 
- * </p>
- *
- * @author 虎哥
- * @since 2021-12-22
+ * 探店笔记表
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@Accessors(chain = true)
-@TableName("tb_blog")
+@Accessors(chain = true)//支持链式调用（如 blog.setId(1L).setTitle("xxx")）
+@TableName("tb_blog")//指定该类映射到数据库表 tb_blog
 public class Blog implements Serializable {
 
     private static final long serialVersionUID = 1L;

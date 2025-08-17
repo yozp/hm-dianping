@@ -12,11 +12,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
+/**
+ * 上传笔记接口
+ */
 @Slf4j
 @RestController
 @RequestMapping("upload")
 public class UploadController {
 
+    /**
+     * 上传图片
+     */
     @PostMapping("blog")
     public Result uploadImage(@RequestParam("file") MultipartFile image) {
         try {
@@ -24,7 +30,7 @@ public class UploadController {
             String originalFilename = image.getOriginalFilename();
             // 生成新文件名
             String fileName = createNewFileName(originalFilename);
-            // 保存文件
+            // 将上传文件保存到目标文件
             image.transferTo(new File(SystemConstants.IMAGE_UPLOAD_DIR, fileName));
             // 返回结果
             log.debug("文件上传成功，{}", fileName);
@@ -34,6 +40,9 @@ public class UploadController {
         }
     }
 
+    /**
+     * 删除图片
+     */
     @GetMapping("/blog/delete")
     public Result deleteBlogImg(@RequestParam("name") String filename) {
         File file = new File(SystemConstants.IMAGE_UPLOAD_DIR, filename);
@@ -44,6 +53,9 @@ public class UploadController {
         return Result.ok();
     }
 
+    /**
+     * 新建文件
+     */
     private String createNewFileName(String originalFilename) {
         // 获取后缀
         String suffix = StrUtil.subAfter(originalFilename, ".", true);
