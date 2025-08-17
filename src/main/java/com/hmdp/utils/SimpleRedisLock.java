@@ -8,6 +8,9 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * setnx实现分布式锁
+ */
 public class SimpleRedisLock implements ILock {
 
     private static final String KEY_PREFIX = "lock:";
@@ -42,9 +45,9 @@ public class SimpleRedisLock implements ILock {
         //调用lua脚本
         //参数分别是：要执行的Lua脚本、Redis键列表（这里只有一个键）、脚本参数（这里是线程ID）
         stringRedisTemplate.execute(
-                UNLOCK_SCRIPT,
-                Collections.singletonList(KEY_PREFIX+name),
-                ID_PREFIX+Thread.currentThread().getId()
+                UNLOCK_SCRIPT,//Lua脚本
+                Collections.singletonList(KEY_PREFIX+name),// KEYS[1]：锁的键
+                ID_PREFIX+Thread.currentThread().getId()// ARGV[1]：线程标识
         );
     }
 }
