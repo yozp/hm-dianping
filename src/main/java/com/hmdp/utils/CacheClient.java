@@ -50,7 +50,7 @@ public class CacheClient {
     //---------------------------------------------------------------------------------------------------------------------
 
     /**
-     * 解决缓存穿透
+     * 缓存空对象解决缓存穿透
      */
     public <R, ID> R queryWithPassThrough(
             String keyPrefix, ID id, Class<R> type, Function<ID, R> dbFallback, Long time, TimeUnit unit) {
