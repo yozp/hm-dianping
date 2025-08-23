@@ -17,10 +17,43 @@
         <java.version>1.8</java.version>
     </properties>
     <dependencies>
-        <!-- Spring Boot Redis 支持，包含连接池和Lettuce客户端 -->
+<!--        &lt;!&ndash; Spring Boot Redis 支持，包含连接池和Lettuce客户端 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>org.springframework.boot</groupId>-->
+<!--            <artifactId>spring-boot-starter-data-redis</artifactId>-->
+<!--        </dependency>-->
+
+        <!-- Spring Boot Redis 启动器：提供Redis集成的基本配置和自动配置 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
+            <exclusions>
+                <!-- 排除默认的spring-data-redis：可能是为了使用特定版本 -->
+                <exclusion>
+                    <artifactId>spring-data-redis</artifactId>
+                    <groupId>org.springframework.data</groupId>
+                </exclusion>
+                <!-- 排除默认的lettuce客户端：可能是为了使用特定版本 -->
+                <exclusion>
+                    <artifactId>lettuce-core</artifactId>
+                    <groupId>io.lettuce</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Spring Data Redis：Redis数据操作框架，提供Template等操作类 -->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-redis</artifactId>
+            <version>2.6.2</version>
+        </dependency>
+
+        <!-- Lettuce Redis客户端：高性能的Redis连接驱动 -->
+        <!-- 指定版本6.1.6.RELEASE：确保与Spring Data Redis 2.6.2版本兼容 -->
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+            <version>6.1.6.RELEASE</version>
         </dependency>
 
         <!-- Apache Commons 对象池实现，被Redis Starter依赖 -->
