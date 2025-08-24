@@ -101,4 +101,20 @@ public class UserController {
         return Result.ok(userDTO);
     }
 
+    /**
+     * 用户每日签到
+     */
+    @PostMapping("/sign")
+    public Result sign(){
+        return userService.sign();
+    }
+
+    /**
+     * 统计每月签到
+     */
+    @GetMapping("/sign/count")
+    public Result signCount(){
+        return userService.signCount();
+    }
+
 }

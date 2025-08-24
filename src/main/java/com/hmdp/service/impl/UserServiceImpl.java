@@ -15,13 +15,17 @@ import com.hmdp.utils.RegexUtils;
 import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -74,7 +78,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         // 3.校验验证码
         String cacheCode = stringRedisTemplate.opsForValue().get(LOGIN_CODE_KEY + phone);
         String code = loginForm.getCode();
-        if(cacheCode == null || !cacheCode.toString().equals(code)){
+        if (cacheCode == null || !cacheCode.toString().equals(code)) {
             //3.不一致，报错
             return Result.fail("验证码错误");
         }
@@ -82,24 +86,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         User user = query().eq("phone", phone).one();
 
         //5.判断用户是否存在
-        if(user == null){
+        if (user == null) {
             //不存在，则创建
-            user =  createUserWithPhone(phone);
+            user = createUserWithPhone(phone);
         }
         //7.保存用户信息到redis中
         // 7.1.随机生成token，作为登录令牌
         String token = UUID.randomUUID().toString(true);
         String tokenKey = LOGIN_USER_KEY + token;
         // 7.2.将User对象转为HashMap存储
-        UserDTO userDTO=BeanUtil.copyProperties(user, UserDTO.class);
-        Map<String, Object> userMap = BeanUtil.beanToMap(userDTO,new HashMap<>(),
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        Map<String, Object> userMap = BeanUtil.beanToMap(userDTO, new HashMap<>(),
                 CopyOptions.create()
                         .setIgnoreNullValue(true)
-                        .setFieldValueEditor((fieldName,fieldValue)->fieldValue.toString()));
+                        .setFieldValueEditor((fieldName, fieldValue) -> fieldValue.toString()));
         // 7.3.存储
         stringRedisTemplate.opsForHash().putAll(tokenKey, userMap);
         // 7.4.设置token有效期
-        stringRedisTemplate.expire(tokenKey,LOGIN_USER_TTL, TimeUnit.MINUTES);
+        stringRedisTemplate.expire(tokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES);
 
         // 8.返回token
         return Result.ok(token);
@@ -107,16 +111,69 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result sign() {
-        return null;
+        // 1.获取当前登录用户
+        Long userId = UserHolder.getUser().getId();
+        // 2.获取日期
+        LocalDateTime now = LocalDateTime.now();
+        // 3.拼接key
+        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = USER_SIGN_KEY + userId + keySuffix;
+        // 4.获取今天是本月的第几天
+        int dayOfMonth = now.getDayOfMonth();
+        // 5.写入Redis SETBIT key offset 1
+        //参数：Redis 中存储位图的键、位的偏移量（从 0 开始）（你可以把它想象成数组的索引）、要设置的值
+        stringRedisTemplate.opsForValue().setBit(key, dayOfMonth - 1, true);
+        return Result.ok();
     }
 
+    /**
+     * 统计每月签到
+     */
     @Override
     public Result signCount() {
-        return null;
+        // 1.获取当前登录用户
+        Long userId = UserHolder.getUser().getId();
+        // 2.获取日期
+        LocalDateTime now = LocalDateTime.now();
+        // 3.拼接key
+        String keySuffix = now.format(DateTimeFormatter.ofPattern(":yyyyMM"));
+        String key = USER_SIGN_KEY + userId + keySuffix;//如：sign:user:1001:202408
+        // 4.获取今天是本月的第几天
+        int dayOfMonth = now.getDayOfMonth();
+        // 5.获取本月截止今天为止的所有的签到记录，返回的是一个十进制的数字
+        // BITFIELD sign:5:202203 GET u14 0
+        // bitField() 方法是对 Redis BITFIELD 命令的封装。它允许你在一个 Redis 字符串（位图）上执行多个连续的位操作，这些操作在一次原子命令中完成。
+        List<Long> result=stringRedisTemplate.opsForValue().bitField(key,
+                BitFieldSubCommands.create().get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0));
+        if(result==null||result.isEmpty()){
+            // 没有任何签到结果
+            return Result.ok(0);
+        }
+        Long num=result.get(0);
+        if(num==null||num==0){
+            return Result.ok(0);
+        }
+        // 6.循环遍历
+        //bitMap返回的数据是10进制，哪假如说返回一个数字8，签到数不一定是8，要看1的个数
+        int count=0;
+        while (true){
+            // 6.1.让这个数字与1做与运算，得到数字的最后一个bit位
+            if((num&1)==0){
+                // 如果为0，说明未签到，结束
+                break;
+            }else{
+                // 如果不为0，说明已签到，计数器+1
+                count++;
+            }
+            // 把数字右移一位，抛弃最后一个bit位，继续下一个bit位
+            num>>>=1;
+        }
+        return Result.ok(count);
     }
 
     /**
      * 电话号码创建账号
+     *
      * @param phone
      * @return
      */
